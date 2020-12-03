@@ -20,7 +20,7 @@ URL = 'https://github.com/tczhangzhi/VisionTransformer-PyTorch'
 EMAIL = 'zhangzhi2018@email.szu.edu.cn'
 AUTHOR = 'ZHANG Zhi'
 REQUIRES_PYTHON = '>=3.5.0'
-VERSION = '1.0.0'
+VERSION = '1.0.1'
 
 # What packages are required for this module to be executed?
 REQUIRED = [

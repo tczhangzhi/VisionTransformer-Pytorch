@@ -61,10 +61,10 @@ def vision_transformer(model_name):
     """
 
     params_dict = {
-        'ViT-B_16': (256, 16, 768, 3072, 12, 12, 1000, 0.0, 0.1),
-        'ViT-B_32': (256, 32, 768, 3072, 12, 12, 1000, 0.0, 0.1),
-        'ViT-L_16': (256, 16, 1024, 4096, 16, 24, 1000, 0.0, 0.1),
-        'ViT-L_32': (256, 32, 1024, 4096, 16, 24, 1000, 0.0, 0.1)
+        'ViT-B_16': (384, 16, 768, 3072, 12, 12, 1000, 0.0, 0.1),
+        'ViT-B_32': (384, 32, 768, 3072, 12, 12, 1000, 0.0, 0.1),
+        'ViT-L_16': (384, 16, 1024, 4096, 16, 24, 1000, 0.0, 0.1),
+        'ViT-L_32': (384, 32, 1024, 4096, 16, 24, 1000, 0.0, 0.1)
     }
     image_size, patch_size, emb_dim, mlp_dim, num_heads, num_layers, num_classes, attn_dropout_rate, dropout_rate = params_dict[model_name]
     params = Params(
@@ -102,13 +102,13 @@ def get_model_params(model_name, override_params):
 # check more details in paper(EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks)
 url_map = {
     'ViT-B_16':
-    'https://github.com/tczhangzhi/VisionTransformer-PyTorch/releases/download/1.0/ViT-B_16.pth',
+    'https://github.com/tczhangzhi/VisionTransformer-PyTorch/releases/download/1.0.1/ViT-B_16_imagenet21k_imagenet2012.pth',
     'ViT-B_32':
-    'https://github.com/tczhangzhi/VisionTransformer-PyTorch/releases/download/1.0/ViT-B_32.pth',
+    'https://github.com/tczhangzhi/VisionTransformer-PyTorch/releases/download/1.0.1/ViT-B_32_imagenet21k_imagenet2012.pth',
     'ViT-L_16':
-    'https://github.com/tczhangzhi/VisionTransformer-PyTorch/releases/download/1.0/ViT-L_16.pth',
+    'https://github.com/tczhangzhi/VisionTransformer-PyTorch/releases/download/1.0.1/ViT-L_16_imagenet21k_imagenet2012.pth',
     'ViT-L_32':
-    'https://github.com/tczhangzhi/VisionTransformer-PyTorch/releases/download/1.0/ViT-L_32.pth',
+    'https://github.com/tczhangzhi/VisionTransformer-PyTorch/releases/download/1.0.1/ViT-L_32_imagenet21k_imagenet2012.pth',
 }
 
 

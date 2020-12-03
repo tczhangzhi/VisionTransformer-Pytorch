@@ -97,13 +97,12 @@ def convert_jax_pytorch(keys, values):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Convert JAX model to PyTorch model and save for easier future loading')
-    parser.add_argument('--jax_checkpoint', type=str, default='pretrained_jax/ViT-L_16.npz',
+    parser.add_argument('--jax_checkpoint', type=str, default='pretrained_jax/ViT-B_32.npz',
                         help='jax checkpoint file path')
-    parser.add_argument('--output_file', type=str, default='pretrained_pytorch/ViT-L_16.pth',
+    parser.add_argument('--output_file', type=str, default='pretrained_pytorch/ViT-B_32.pth',
                         help='output PyTorch model file name')
     args = parser.parse_args()
 
     keys, values = load_jax(args.jax_checkpoint)
     state_dict = convert_jax_pytorch(keys, values)
-    checkpoint = {'state_dict': state_dict}
-    torch.save(checkpoint, args.output_file)
+    torch.save(state_dict, args.output_file)

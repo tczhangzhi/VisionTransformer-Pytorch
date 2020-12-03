@@ -17,7 +17,7 @@ def model(request):
     return request.param
 
 
-@pytest.fixture(scope='module', params=[False])
+@pytest.fixture(scope='module', params=[True, False])
 def pretrained(request):
     return request.param
 
