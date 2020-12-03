@@ -221,7 +221,7 @@ class VisionTransformer(nn.Module):
         gh, gw = h // fh, w // fw
         return gh * gw
 
-    def forward(self, x):
+    def extract_features(self, x):
         emb = self.embedding(x)  # (n, c, gh, gw)
         emb = emb.permute(0, 2, 3, 1)  # (n, gh, hw, c)
         b, h, w, c = emb.shape
@@ -233,6 +233,10 @@ class VisionTransformer(nn.Module):
 
         # transformer
         feat = self.transformer(emb)
+        return feat
+
+    def forward(self, x):
+        feat = self.extract_features(x)
 
         # classifier
         logits = self.classifier(feat[:, 0])

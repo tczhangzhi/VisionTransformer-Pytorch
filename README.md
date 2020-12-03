@@ -48,6 +48,30 @@ Load a pretrained EfficientNet:
 ```
 from vision_transformer_pytorch import VisionTransformer
 model = VisionTransformer.from_pretrained('ViT-B_16')
+# inputs = torch.randn(1, 3, *model.image_size)
+# model(inputs)
+# model.extract_features(inputs)
+```
+
+Default hyper parameters:
+
+| Param\Model       | ViT-B_16 | ViT-B_32 | ViT-L_16 | ViT-L_32 |
+| ----------------- | -------- | -------- | -------- | -------- |
+| image_size        | 384      | 384      | 384      | 384      |
+| patch_size        | 16       | 32       | 16       | 32       |
+| emb_dim           | 768      | 768      | 1024     | 1024     |
+| mlp_dim           | 3072     | 3072     | 4096     | 4096     |
+| num_heads         | 12       | 12       | 16       | 16       |
+| num_layers        | 12       | 12       | 24       | 24       |
+| num_classes       | 1000     | 1000     | 1000     | 1000     |
+| attn_dropout_rate | 0.0      | 0.0      | 0.0      | 0.0      |
+| dropout_rate      | 0.1      | 0.1      | 0.1      | 0.1      |
+
+If you need to modify these hyper parameters, please use:
+
+```
+from vision_transformer_pytorch import VisionTransformer
+model = VisionTransformer.from_name('ViT-B_16', image_size=256, patch_size=64, ...)
 ```
 
 #### ImageNet
