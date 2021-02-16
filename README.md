@@ -36,18 +36,18 @@ pip install -e .
 
 #### Loading pretrained models
 
-Load an EfficientNet:
+Load a Vision Transformer:
 
 ```
 from vision_transformer_pytorch import VisionTransformer
-model = VisionTransformer.from_name('ViT-B_16')
+model = VisionTransformer.from_name('ViT-B_16') # or 'ViT-B_32', 'ViT-L_16', 'ViT-L_32', 'R50+ViT-B_16'
 ```
 
-Load a pretrained EfficientNet:
+Load a pretrained Vision Transformer:
 
 ```
 from vision_transformer_pytorch import VisionTransformer
-model = VisionTransformer.from_pretrained('ViT-B_16')
+model = VisionTransformer.from_pretrained('ViT-B_16') # or 'ViT-B_32', 'ViT-L_16', 'ViT-L_32', 'R50+ViT-B_16'
 # inputs = torch.randn(1, 3, *model.image_size)
 # model(inputs)
 # model.extract_features(inputs)
