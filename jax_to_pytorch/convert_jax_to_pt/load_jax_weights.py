@@ -53,6 +53,18 @@ def replace_names(names):
             new_names.append('classifier')
         elif name == 'cls':
             new_names.append('cls_token')
+        elif name == 'block1':
+            new_names.append('resnet.body.block1')
+        elif name == 'block2':
+            new_names.append('resnet.body.block2')
+        elif name == 'block3':
+            new_names.append('resnet.body.block3')
+        elif name == 'conv_root':
+            new_names.append('resnet.root.conv')
+        elif name == 'gn_root':
+            new_names.append('resnet.root.gn')
+        elif name == 'conv_proj':
+            new_names.append('downsample')
         else:
             new_names.append(name)
     return new_names
@@ -81,9 +93,15 @@ def convert_jax_pytorch(keys, values):
             feat_dim, num_heads, head_dim = tensor_value.shape
             # for multi head attention q/k/v weight
             tensor_value = tensor_value
+        elif torch_names[-1] == 'weight' and 'gn' in torch_names[-2]:
+            # for multi head attention q/k/v weight
+            tensor_value = tensor_value.reshape(tensor_value.shape[-1])
         elif num_dim == 2 and torch_names[-1] == 'bias' and torch_names[-2] in ['query', 'key', 'value']:
             # for multi head attention q/k/v bias
             tensor_value = tensor_value
+        elif torch_names[-1] == 'bias' and 'gn' in torch_names[-2]:
+            # for multi head attention q/k/v weight
+            tensor_value = tensor_value.reshape(tensor_value.shape[-1])
         elif num_dim == 3 and torch_names[-1] == 'weight' and torch_names[-2] == 'out':
             # for multi head attention out weight
             tensor_value = tensor_value

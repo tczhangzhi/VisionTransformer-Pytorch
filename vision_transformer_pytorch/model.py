@@ -7,15 +7,18 @@ import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .utils import (get_width_and_height_from_size, load_pretrained_weights, get_model_params)
+from .resnet import StdConv2d
+from .utils import (get_width_and_height_from_size, load_pretrained_weights,
+                    get_model_params)
 
-VALID_MODELS = ('ViT-B_16', 'ViT-B_32', 'ViT-L_16', 'ViT-L_32')
+VALID_MODELS = ('ViT-B_16', 'ViT-B_32', 'ViT-L_16', 'ViT-L_32', 'R50+ViT-B_16')
 
 
 class PositionEmbs(nn.Module):
     def __init__(self, num_patches, emb_dim, dropout_rate=0.1):
         super(PositionEmbs, self).__init__()
-        self.pos_embedding = nn.Parameter(torch.randn(1, num_patches + 1, emb_dim))
+        self.pos_embedding = nn.Parameter(
+            torch.randn(1, num_patches + 1, emb_dim))
         if dropout_rate > 0:
             self.dropout = nn.Dropout(dropout_rate)
         else:
@@ -109,11 +112,18 @@ class SelfAttention(nn.Module):
 
 
 class EncoderBlock(nn.Module):
-    def __init__(self, in_dim, mlp_dim, num_heads, dropout_rate=0.1, attn_dropout_rate=0.1):
+    def __init__(self,
+                 in_dim,
+                 mlp_dim,
+                 num_heads,
+                 dropout_rate=0.1,
+                 attn_dropout_rate=0.1):
         super(EncoderBlock, self).__init__()
 
         self.norm1 = nn.LayerNorm(in_dim)
-        self.attn = SelfAttention(in_dim, heads=num_heads, dropout_rate=attn_dropout_rate)
+        self.attn = SelfAttention(in_dim,
+                                  heads=num_heads,
+                                  dropout_rate=attn_dropout_rate)
         if dropout_rate > 0:
             self.dropout = nn.Dropout(dropout_rate)
         else:
@@ -154,7 +164,8 @@ class Encoder(nn.Module):
         in_dim = emb_dim
         self.encoder_layers = nn.ModuleList()
         for i in range(num_layers):
-            layer = EncoderBlock(in_dim, mlp_dim, num_heads, dropout_rate, attn_dropout_rate)
+            layer = EncoderBlock(in_dim, mlp_dim, num_heads, dropout_rate,
+                                 attn_dropout_rate)
             self.encoder_layers.append(layer)
         self.norm = nn.LayerNorm(in_dim)
 
@@ -190,21 +201,33 @@ class VisionTransformer(nn.Module):
         super(VisionTransformer, self).__init__()
         self._params = params
 
-        self.embedding = nn.Conv2d(3, self._params.emb_dim, kernel_size=self.patch_size, stride=self.patch_size)
+        if self._params.resnet:
+            self.resnet = self._params.resnet()
+            self.embedding = nn.Conv2d(self.resnet.width * 16,
+                                       self._params.emb_dim,
+                                       kernel_size=1,
+                                       stride=1)
+        else:
+            self.embedding = nn.Conv2d(3,
+                                       self._params.emb_dim,
+                                       kernel_size=self.patch_size,
+                                       stride=self.patch_size)
         # class token
         self.cls_token = nn.Parameter(torch.zeros(1, 1, self._params.emb_dim))
 
         # transformer
-        self.transformer = Encoder(num_patches=self.num_patches,
-                                   emb_dim=self._params.emb_dim,
-                                   mlp_dim=self._params.mlp_dim,
-                                   num_layers=self._params.num_layers,
-                                   num_heads=self._params.num_heads,
-                                   dropout_rate=self._params.dropout_rate,
-                                   attn_dropout_rate=self._params.attn_dropout_rate)
+        self.transformer = Encoder(
+            num_patches=self.num_patches,
+            emb_dim=self._params.emb_dim,
+            mlp_dim=self._params.mlp_dim,
+            num_layers=self._params.num_layers,
+            num_heads=self._params.num_heads,
+            dropout_rate=self._params.dropout_rate,
+            attn_dropout_rate=self._params.attn_dropout_rate)
 
         # classfier
-        self.classifier = nn.Linear(self._params.emb_dim, self._params.num_classes)
+        self.classifier = nn.Linear(self._params.emb_dim,
+                                    self._params.num_classes)
 
     @property
     def image_size(self):
@@ -218,10 +241,16 @@ class VisionTransformer(nn.Module):
     def num_patches(self):
         h, w = self.image_size
         fh, fw = self.patch_size
-        gh, gw = h // fh, w // fw
+        if hasattr(self, 'resnet'):
+            gh, gw = h // fh // self.resnet.downsample, w // fw // self.resnet.downsample
+        else:
+            gh, gw = h // fh, w // fw
         return gh * gw
 
     def extract_features(self, x):
+        if hasattr(self, 'resnet'):
+            x = self.resnet(x)
+
         emb = self.embedding(x)  # (n, c, gh, gw)
         emb = emb.permute(0, 2, 3, 1)  # (n, gh, hw, c)
         b, h, w, c = emb.shape
@@ -266,7 +295,12 @@ class VisionTransformer(nn.Module):
         return model
 
     @classmethod
-    def from_pretrained(cls, model_name, weights_path=None, in_channels=3, num_classes=1000, **override_params):
+    def from_pretrained(cls,
+                        model_name,
+                        weights_path=None,
+                        in_channels=3,
+                        num_classes=1000,
+                        **override_params):
         """create an vision transformer model according to name.
         Args:
             model_name (str): Name for vision transformer.
@@ -288,8 +322,13 @@ class VisionTransformer(nn.Module):
         Returns:
             A pretrained vision transformer model.
         """
-        model = cls.from_name(model_name, num_classes=num_classes, **override_params)
-        load_pretrained_weights(model, model_name, weights_path=weights_path, load_fc=(num_classes == 1000))
+        model = cls.from_name(model_name,
+                              num_classes=num_classes,
+                              **override_params)
+        load_pretrained_weights(model,
+                                model_name,
+                                weights_path=weights_path,
+                                load_fc=(num_classes == 1000))
         model._change_in_channels(in_channels)
         return model
 
@@ -302,7 +341,8 @@ class VisionTransformer(nn.Module):
             bool: Is a valid name or not.
         """
         if model_name not in VALID_MODELS:
-            raise ValueError('model_name should be one of: ' + ', '.join(VALID_MODELS))
+            raise ValueError('model_name should be one of: ' +
+                             ', '.join(VALID_MODELS))
 
     def _change_in_channels(self, in_channels):
         """Adjust model's first convolution layer to in_channels, if in_channels not equals 3.
@@ -310,7 +350,15 @@ class VisionTransformer(nn.Module):
             in_channels (int): Input data's channel number.
         """
         if in_channels != 3:
-            self.embedding = nn.Conv2d(in_channels,
-                                       self._params.emb_dim,
-                                       kernel_size=self.patch_size,
-                                       stride=self.patch_size)
+            if hasattr(self, 'resnet'):
+                self.resnet.root['conv'] = StdConv2d(in_channels,
+                                                     self.resnet.width,
+                                                     kernel_size=7,
+                                                     stride=2,
+                                                     bias=False,
+                                                     padding=3)
+            else:
+                self.embedding = nn.Conv2d(in_channels,
+                                           self._params.emb_dim,
+                                           kernel_size=self.patch_size,
+                                           stride=self.patch_size)

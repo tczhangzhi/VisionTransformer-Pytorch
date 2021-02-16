@@ -3,12 +3,15 @@
 
 import re
 import math
-import collections
-from functools import partial
 import torch
+import collections
+
 from torch import nn
-from torch.nn import functional as F
+from functools import partial
 from torch.utils import model_zoo
+from torch.nn import functional as F
+
+from .resnet import resnet50
 
 ################################################################################
 ### Help functions for model architecture
@@ -19,8 +22,8 @@ from torch.utils import model_zoo
 
 # Parameters for the entire model (stem, all blocks, and head)
 Params = collections.namedtuple('Params', [
-    'image_size', 'patch_size', 'emb_dim', 'mlp_dim', 'num_heads', 'num_layers', 'num_classes', 'attn_dropout_rate',
-    'dropout_rate'
+    'image_size', 'patch_size', 'emb_dim', 'mlp_dim', 'num_heads', 'num_layers',
+    'num_classes', 'attn_dropout_rate', 'dropout_rate', 'resnet'
 ])
 
 # Set Params and BlockArgs's defaults
@@ -61,23 +64,24 @@ def vision_transformer(model_name):
     """
 
     params_dict = {
-        'ViT-B_16': (384, 16, 768, 3072, 12, 12, 1000, 0.0, 0.1),
-        'ViT-B_32': (384, 32, 768, 3072, 12, 12, 1000, 0.0, 0.1),
-        'ViT-L_16': (384, 16, 1024, 4096, 16, 24, 1000, 0.0, 0.1),
-        'ViT-L_32': (384, 32, 1024, 4096, 16, 24, 1000, 0.0, 0.1)
+        'ViT-B_16': (384, 16, 768, 3072, 12, 12, 1000, 0.0, 0.1, None),
+        'ViT-B_32': (384, 32, 768, 3072, 12, 12, 1000, 0.0, 0.1, None),
+        'ViT-L_16': (384, 16, 1024, 4096, 16, 24, 1000, 0.0, 0.1, None),
+        'ViT-L_32': (384, 32, 1024, 4096, 16, 24, 1000, 0.0, 0.1, None),
+        'R50+ViT-B_16': (384, 1, 768, 3072, 12, 12, 1000, 0.0, 0.1, resnet50),
     }
-    image_size, patch_size, emb_dim, mlp_dim, num_heads, num_layers, num_classes, attn_dropout_rate, dropout_rate = params_dict[model_name]
-    params = Params(
-        image_size=image_size,
-        patch_size=patch_size,
-        emb_dim=emb_dim,
-        mlp_dim=mlp_dim,
-        num_heads=num_heads,
-        num_layers=num_layers,
-        num_classes=num_classes,
-        attn_dropout_rate=attn_dropout_rate,
-        dropout_rate=dropout_rate
-    )
+    image_size, patch_size, emb_dim, mlp_dim, num_heads, num_layers, num_classes, attn_dropout_rate, dropout_rate, resnet = params_dict[
+        model_name]
+    params = Params(image_size=image_size,
+                    patch_size=patch_size,
+                    emb_dim=emb_dim,
+                    mlp_dim=mlp_dim,
+                    num_heads=num_heads,
+                    num_layers=num_layers,
+                    num_classes=num_classes,
+                    attn_dropout_rate=attn_dropout_rate,
+                    dropout_rate=dropout_rate,
+                    resnet=resnet)
 
     return params
 
@@ -99,7 +103,7 @@ def get_model_params(model_name, override_params):
 
 
 # train with Standard methods
-# check more details in paper(EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks)
+# check more details in paper(An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale)
 url_map = {
     'ViT-B_16':
     'https://github.com/tczhangzhi/VisionTransformer-PyTorch/releases/download/1.0.1/ViT-B_16_imagenet21k_imagenet2012.pth',
@@ -109,10 +113,16 @@ url_map = {
     'https://github.com/tczhangzhi/VisionTransformer-PyTorch/releases/download/1.0.1/ViT-L_16_imagenet21k_imagenet2012.pth',
     'ViT-L_32':
     'https://github.com/tczhangzhi/VisionTransformer-PyTorch/releases/download/1.0.1/ViT-L_32_imagenet21k_imagenet2012.pth',
+    'R50+ViT-B_16':
+    'https://github.com/tczhangzhi/VisionTransformer-PyTorch/releases/download/1.0.1/R50+ViT-B_16_imagenet21k_imagenet2012.pth',
 }
 
 
-def load_pretrained_weights(model, model_name, weights_path=None, load_fc=True, advprop=False):
+def load_pretrained_weights(model,
+                            model_name,
+                            weights_path=None,
+                            load_fc=True,
+                            advprop=False):
     """Loads pretrained weights from weights path or download using url.
     Args:
         model (Module): The whole model of vision transformer.
@@ -129,13 +139,17 @@ def load_pretrained_weights(model, model_name, weights_path=None, load_fc=True, 
 
     if load_fc:
         ret = model.load_state_dict(state_dict, strict=False)
-        assert not ret.missing_keys, 'Missing keys when loading pretrained weights: {}'.format(ret.missing_keys)
+        assert not ret.missing_keys, 'Missing keys when loading pretrained weights: {}'.format(
+            ret.missing_keys)
     else:
         state_dict.pop('classifier.weight')
         state_dict.pop('classifier.bias')
         ret = model.load_state_dict(state_dict, strict=False)
-        assert set(ret.missing_keys) == set(
-            ['classifier.weight', 'classifier.bias']), 'Missing keys when loading pretrained weights: {}'.format(ret.missing_keys)
-    assert not ret.unexpected_keys, 'Missing keys when loading pretrained weights: {}'.format(ret.unexpected_keys)
+        assert set(ret.missing_keys) == set([
+            'classifier.weight', 'classifier.bias'
+        ]), 'Missing keys when loading pretrained weights: {}'.format(
+            ret.missing_keys)
+    assert not ret.unexpected_keys, 'Missing keys when loading pretrained weights: {}'.format(
+        ret.unexpected_keys)
 
     print('Loaded pretrained weights for {}'.format(model_name))

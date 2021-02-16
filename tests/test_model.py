@@ -12,7 +12,9 @@ from vision_transformer_pytorch import VisionTransformer
 # -- fixtures -------------------------------------------------------------------------------------
 
 
-@pytest.fixture(scope='module', params=['ViT-B_16', 'ViT-B_32', 'ViT-L_16', 'ViT-L_32'])
+@pytest.fixture(
+    scope='module',
+    params=['ViT-B_16', 'ViT-B_32', 'ViT-L_16', 'ViT-L_32', 'R50+ViT-B_16'])
 def model(request):
     return request.param
 
@@ -24,7 +26,8 @@ def pretrained(request):
 
 @pytest.fixture(scope='function')
 def net(model, pretrained):
-    return VisionTransformer.from_pretrained(model) if pretrained else VisionTransformer.from_name(model)
+    return VisionTransformer.from_pretrained(
+        model) if pretrained else VisionTransformer.from_name(model)
 
 
 # -- tests ----------------------------------------------------------------------------------------
@@ -35,6 +38,7 @@ def test_forward(net):
     data = torch.zeros((1, 3, *net.image_size))
     output = net(data)
     assert not torch.isnan(output).any()
+
 
 @pytest.mark.parametrize('img_size', [224, 256, 512])
 def test_hyper_params(model, img_size):
