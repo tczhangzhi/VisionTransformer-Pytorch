@@ -98,16 +98,9 @@ class SelfAttention(nn.Module):
         b, n, _ = x.shape
 
         ## 'if' for normal forward pass, 'else' for adv forward pass
-        if self.q_val == None and self.k_val == None and self.v_val == None:
-            q = self.query(x, dims=([2], [0]))
-            k = self.key(x, dims=([2], [0]))
-            v = self.value(x, dims=([2], [0]))
-        else:
-            ## Fixing just q and k
-            q = self.q_val
-            k = self.k_val
-            v = self.value(x, dims=([2], [0]))
-
+        q = self.query(x, dims=([2], [0]))
+        k = self.key(x, dims=([2], [0]))
+        v = self.value(x, dims=([2], [0]))
 
         ## Store values before permutatation
         self.q_val = q
@@ -389,8 +382,8 @@ class SelfAttention_qk_fixed(nn.Module):
         self.head_dim = in_dim // heads
         self.scale = self.head_dim**0.5
 
-        self.query = LinearGeneral((in_dim, ), (self.heads, self.head_dim))
-        self.key = LinearGeneral((in_dim, ), (self.heads, self.head_dim))
+#         self.query = LinearGeneral((in_dim, ), (self.heads, self.head_dim))
+#         self.key = LinearGeneral((in_dim, ), (self.heads, self.head_dim))
         self.value = LinearGeneral((in_dim, ), (self.heads, self.head_dim))
         self.out = LinearGeneral((self.heads, self.head_dim), (in_dim, ))
 
