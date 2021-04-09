@@ -382,8 +382,8 @@ class SelfAttention_qk_fixed(nn.Module):
         self.head_dim = in_dim // heads
         self.scale = self.head_dim**0.5
 
-#         self.query = LinearGeneral((in_dim, ), (self.heads, self.head_dim))
-#         self.key = LinearGeneral((in_dim, ), (self.heads, self.head_dim))
+        self.query = LinearGeneral((in_dim, ), (self.heads, self.head_dim))
+        self.key = LinearGeneral((in_dim, ), (self.heads, self.head_dim))
         self.value = LinearGeneral((in_dim, ), (self.heads, self.head_dim))
         self.out = LinearGeneral((self.heads, self.head_dim), (in_dim, ))
 
