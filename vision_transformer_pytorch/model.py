@@ -102,20 +102,16 @@ class SelfAttention(nn.Module):
         self.k_val = self.key(x, dims=([2], [0]))
         self.v_val = self.value(x, dims=([2], [0]))
 
-        self.q_val = self.q_val.permute(0, 2, 1, 3)
-        self.k_val = self.k_val.permute(0, 2, 1, 3)
-        self.v_val = self.v_val.permute(0, 2, 1, 3)
+        q_val = self.q_val.permute(0, 2, 1, 3)
+        k_val = self.k_val.permute(0, 2, 1, 3)
+        v_val = self.v_val.permute(0, 2, 1, 3)
 
-        attn_weights = torch.matmul(self.q_val, self.k_val.transpose(-2, -1)) / self.scale
+        attn_weights = torch.matmul(q_val, k_val.transpose(-2, -1)) / self.scale
         attn_weights = F.softmax(attn_weights, dim=-1)
-        out = torch.matmul(attn_weights, self.v_val)
+        out = torch.matmul(attn_weights, v_val)
         out = out.permute(0, 2, 1, 3)
 
         out = self.out(out, dims=([2, 3], [0, 1]))
-        
-        self.q_val = self.q_val.permute(0, 2, 1, 3)
-        self.k_val = self.k_val.permute(0, 2, 1, 3)
-        self.v_val = self.v_val.permute(0, 2, 1, 3)
         
         return out
 
@@ -405,13 +401,17 @@ class SelfAttention_qk_fixed(nn.Module):
         self.k_val = self.k_val.permute(0, 2, 1, 3)
         self.v_val = self.v_val.permute(0, 2, 1, 3)
 
-        attn_weights = torch.matmul(self.q_val, self.k_val.transpose(-2, -1)) / self.scale
+        q_val = self.q_val.permute(0, 2, 1, 3)
+        k_val = self.k_val.permute(0, 2, 1, 3)
+        v_val = self.v_val.permute(0, 2, 1, 3)
+
+        attn_weights = torch.matmul(q_val, k_val.transpose(-2, -1)) / self.scale
         attn_weights = F.softmax(attn_weights, dim=-1)
-        out = torch.matmul(attn_weights, self.v_val)
+        out = torch.matmul(attn_weights, v_val)
         out = out.permute(0, 2, 1, 3)
 
         out = self.out(out, dims=([2, 3], [0, 1]))
-
+        
         return out
 
 
