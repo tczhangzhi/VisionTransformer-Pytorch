@@ -112,7 +112,11 @@ class SelfAttention(nn.Module):
         out = out.permute(0, 2, 1, 3)
 
         out = self.out(out, dims=([2, 3], [0, 1]))
-
+        
+        self.q_val = self.q_val.permute(0, 2, 1, 3)
+        self.k_val = self.k_val.permute(0, 2, 1, 3)
+        self.v_val = self.v_val.permute(0, 2, 1, 3)
+        
         return out
 
 
