@@ -395,7 +395,7 @@ class SelfAttention_qk_fixed(nn.Module):
         b, n, _ = x.shape
 
         ## Fixing just q and k
-        v = self.value(x, dims=([2], [0]))
+        self.v_val = self.value(x, dims=([2], [0]))
 
         self.q_val = self.q_val.permute(0, 2, 1, 3)
         self.k_val = self.k_val.permute(0, 2, 1, 3)
