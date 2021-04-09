@@ -98,22 +98,17 @@ class SelfAttention(nn.Module):
         b, n, _ = x.shape
 
         ## 'if' for normal forward pass, 'else' for adv forward pass
-        q = self.query(x, dims=([2], [0]))
-        k = self.key(x, dims=([2], [0]))
-        v = self.value(x, dims=([2], [0]))
+        self.q_val = self.query(x, dims=([2], [0]))
+        self.k_val = self.key(x, dims=([2], [0]))
+        self.v_val = self.value(x, dims=([2], [0]))
 
-        ## Store values before permutatation
-        self.q_val = q
-        self.k_val = k
-        self.v_val = v
+        self.q_val = self.q_val.permute(0, 2, 1, 3)
+        self.k_val = self.k_val.permute(0, 2, 1, 3)
+        self.v_val = self.v_val.permute(0, 2, 1, 3)
 
-        q = q.permute(0, 2, 1, 3)
-        k = k.permute(0, 2, 1, 3)
-        v = v.permute(0, 2, 1, 3)
-
-        attn_weights = torch.matmul(q, k.transpose(-2, -1)) / self.scale
+        attn_weights = torch.matmul(self.q_val, self.k_val.transpose(-2, -1)) / self.scale
         attn_weights = F.softmax(attn_weights, dim=-1)
-        out = torch.matmul(attn_weights, v)
+        out = torch.matmul(attn_weights, self.v_val)
         out = out.permute(0, 2, 1, 3)
 
         out = self.out(out, dims=([2, 3], [0, 1]))
@@ -400,22 +395,15 @@ class SelfAttention_qk_fixed(nn.Module):
         b, n, _ = x.shape
 
         ## Fixing just q and k
-        q = self.q_val
-        k = self.k_val
         v = self.value(x, dims=([2], [0]))
 
-        ## Store values before permutatation
-        self.q_val = q
-        self.k_val = k
-        self.v_val = v
+        self.q_val = self.q_val.permute(0, 2, 1, 3)
+        self.k_val = self.k_val.permute(0, 2, 1, 3)
+        self.v_val = self.v_val.permute(0, 2, 1, 3)
 
-        q = q.permute(0, 2, 1, 3)
-        k = k.permute(0, 2, 1, 3)
-        v = v.permute(0, 2, 1, 3)
-
-        attn_weights = torch.matmul(q, k.transpose(-2, -1)) / self.scale
+        attn_weights = torch.matmul(self.q_val, self.k_val.transpose(-2, -1)) / self.scale
         attn_weights = F.softmax(attn_weights, dim=-1)
-        out = torch.matmul(attn_weights, v)
+        out = torch.matmul(attn_weights, self.v_val)
         out = out.permute(0, 2, 1, 3)
 
         out = self.out(out, dims=([2, 3], [0, 1]))
