@@ -110,9 +110,9 @@ class SelfAttention(nn.Module):
 
 
         ## Store values before permutatation
-        self.q_val = q
-        self.k_val = k
-        self.v_val = v
+        self.q_val = q.detach().clone()
+        self.k_val = k.detach().clone()
+        self.v_val = v.detach().clone()
 
         q = q.permute(0, 2, 1, 3)
         k = k.permute(0, 2, 1, 3)
